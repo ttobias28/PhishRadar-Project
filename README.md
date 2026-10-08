@@ -5,13 +5,13 @@
 PhishRadar is a head-to-head comparison of three AI approaches for detecting phishing emails: a classical ML model, a fine-tuned transformer, and a prompted LLM. The focus is on **rigorous evaluation**, especially **cross-dataset generalization**, rather than on a new model architecture.
 
 ## Team
-| Member | Email |
+| Member | Github |
 |---|---|
-| Connor Buttrey | xyz |
-| Oliver Conley | xyz |
-| Robert Morriss | xyz |
-| Ashley Smutnik | xyz |
-| Teagan Tobias | xyz |
+| Connor Buttrey | [@cbuttrey0216](https://github.com/cbuttrey0216) |
+| Oliver Conley | [@opconley97](https://github.com/opconley97) |
+| Robert Morriss | [@rjmorriss](https://github.com/rjmorriss) |
+| Ashley Smutnik | [@asmutnik](https://github.com/asmutnik) |
+| Teagan Tobias | [@ttobias28](https://github.com/ttobias28) |
 
 ---
 
