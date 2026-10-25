@@ -1,0 +1,22 @@
+# data (never commit)
+data/raw/
+data/cleaned/
+data/splits/
+*.csv
+!data/adversarial/*.csv
+
+# secrets
+.env
+
+# python
+venv/
+__pycache__/
+.ipynb_checkpoints/
+
+# models
+*.pt
+*.safetensors
+checkpoints/
+
+# LLM cache (may contain email text)
+results/llm_cache/
