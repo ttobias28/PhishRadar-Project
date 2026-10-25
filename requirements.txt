@@ -1,0 +1,16 @@
+pandas
+numpy
+scikit-learn
+scipy
+matplotlib
+seaborn
+joblib
+tqdm
+ftfy
+python-dotenv
+anthropic
+torch
+transformers
+datasets
+accelerate
+ipykernel
