@@ -1,0 +1,6 @@
+test_set,emails,accuracy,precision,recall,f1,false_positive_rate
+test_insource,3778,0.9751,0.9801,0.9603,0.9701,0.0141
+test_ceas,38748,0.8902,0.9536,0.8429,0.8948,0.0509
+test_nazario_paired,3088,0.8355,0.9239,0.7312,0.8163,0.0602
+test_nazario,1544,0.7312,,0.7312,,
+test_nigerian,3243,0.9861,,0.9861,,
