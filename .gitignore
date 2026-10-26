@@ -4,6 +4,8 @@ data/cleaned/
 data/splits/
 *.csv
 !data/adversarial/*.csv
+!results/**/*.csv
+!results/*.csv
 
 # secrets
 .env
