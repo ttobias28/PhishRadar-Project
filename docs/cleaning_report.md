@@ -1,7 +1,7 @@
 # PhishRadar data cleaning report
 
-**Output:** `train.csv`, `val.csv`, `test.csv`, each with the columns `text`, `label` (1 = phishing, 0 = legit) and `source`.
-**Script:** `clean_data.py` reproduces every step below (random seed 42).
+**Output:** `train.csv`, `val.csv`, `test.csv`, each with the columns `text`, `label` (1 = phishing, 0 = legit) and `source`. These are an **intermediate** random split. The splits used in all experiments are built from them by `src/make_splits.py` (see "Splits" below and `data/README.md`).
+**Script:** `src/clean_data.py` reproduces every step below (random seed 42).
 
 ## Input data
 
@@ -27,7 +27,7 @@
 | **Total removed** | **18,852** | |
 | **Final dataset** | **82,284** | 42,669 phishing (51.9%), 39,615 legit |
 
-Duplicates matter because a copy of an email that lands in both train and test lets the model "remember" the answer, which inflates scores. The final splits were checked and share no emails, not even near-copies.
+Duplicates matter because a copy of an email that lands in both train and test lets the model "remember" the answer, which inflates scores.
 
 ## What was changed (but kept)
 
@@ -38,7 +38,11 @@ Duplicates matter because a copy of an email that lands in both train and test l
 - **Not changed on purpose:** capitalization, punctuation, URLs, numbers. These are real phishing signals, and the BERT model lowercases text by itself. The TF-IDF approach can apply its own extra preprocessing on its copy.
 - **Sender, receiver and date columns were dropped.** These columns only exist for some sources, and fields like CEAS's `@ceas-challenge.cc` addresses would let a model identify the source instead of learning about phishing.
 
-## Splits (80 / 10 / 10)
+## Splits
+
+### Intermediate split (output of `clean_data.py`)
+
+A random 80 / 10 / 10 split, stratified by **source and label**:
 
 | Split | Emails | Phishing share |
 |---|---:|---:|
@@ -46,9 +50,20 @@ Duplicates matter because a copy of an email that lands in both train and test l
 | val | 8,228 | 51.8% |
 | test | 8,229 | 51.9% |
 
-The splits are stratified by **source and label**, so each split has the same mix of collections and the same phishing share. **All three approaches (TF-IDF, BERT, LLM) should be scored on `test.csv`** so the comparison is fair.
+**This split is not used for the experiments.** Train and test share the same sources, so scores on it are too optimistic (see caveat 3).
 
-## Emails by source (final)
+### Final splits (output of `src/make_splits.py`)
+
+`make_splits.py` reads the three files above and builds the cross-source design used by all three approaches:
+
+- **Dropped:** the 966 `PhishingEmailDetection` rows left over from the second dataset (it is a repackaged copy of the other corpora).
+- **Train / val / in-source test:** Enron, Ling and SpamAssassin, split 80/10/10 with near-duplicate mass mailings kept together so templates cannot leak between splits.
+- **Cross-source tests (never trained or tuned on):** CEAS_08, Nazario and Nigerian_Fraud, after removing 1 CEAS and 9 Nigerian emails that also appear in the training sources. A paired Nazario test adds an equal number of legitimate CEAS emails so precision and false-positive rate can be computed.
+- **Checks:** the script asserts that no test email overlaps training data, exactly or by opening text.
+
+Row counts for each final file are listed in `data/README.md`. **All three approaches (TF-IDF, DistilBERT, LLM) should be scored on these final files** so the comparison is fair.
+
+## Emails by source (after cleaning, before `make_splits.py`)
 
 | Source | Emails | Phishing | Legit | % phishing |
 |---|---:|---:|---:|---:|
@@ -60,8 +75,10 @@ The splits are stratified by **source and label**, so each split has the same mi
 | Nazario | 1,544 | 1,544 | 0 | 100% |
 | PhishingEmailDetection | 966 | 549 | 417 | 56.8% |
 
+`PhishingEmailDetection` is dropped later by `make_splits.py`, so it does not appear in the final experiments.
+
 ## Caveats worth mentioning in the write-up
 
 1. **"Phishing" here mostly means spam.** In the Enron, CEAS, SpamAssassin and Ling collections, label 1 means spam, which includes plenty of ordinary ads (pharmacy, mortgage, dating) that are not phishing. Only Nazario (phishing) and Nigerian_Fraud (advance-fee scams) are strictly scams. The models are really learning "malicious or unwanted vs. legitimate."
-2. **Source leakage risk.** Nazario and Nigerian_Fraud contain *only* phishing, and each collection has a recognizable style: Enron and Ling are lowercased with spaces around punctuation, while CEAS and SpamAssassin are in original case. In a quick check, a simple TF-IDF model could tell which collection an email came from with 95% accuracy. A model could therefore score well partly by recognizing the collection. The per-source scores in the notebook and the adversarial AI-written emails are good ways to test this.
-3. **The dataset is easy.** A quick TF-IDF + logistic regression sanity check (default settings) scored about 98.7% accuracy and 0.987 F1 on `test.csv`. Expect all trained methods to land in the high 90s, so the interesting differences will be in the error analysis, the false-positive rate, and generalization to new AI-written phishing.
+2. **Source leakage risk.** Nazario and Nigerian_Fraud contain *only* phishing, and each collection has a recognizable style: Enron and Ling are lowercased with spaces around punctuation, while CEAS and SpamAssassin are in original case. In a quick check, a simple TF-IDF model could tell which collection an email came from with 95% accuracy. A model could therefore score well partly by recognizing the collection. Per-source scores, cross-source testing and the adversarial AI-written emails are the ways we test this.
+3. **In-source scores are easy; cross-source scores are not.** A quick TF-IDF + logistic regression check on the intermediate random split scored about 98.7% accuracy (F1 0.987). On the final in-source test the TF-IDF baseline reaches F1 of about 0.99, but on unseen CEAS emails it drops to about 0.88. The interesting differences between approaches are therefore in generalization to new sources, the false-positive rate, the error analysis, and performance on AI-written phishing.
