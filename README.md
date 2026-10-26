@@ -38,7 +38,7 @@ Deceptive emails are increasingly well written, and attackers now use AI to gene
 | B | **Fine-tuned DistilBERT** | Fine-tuned from pretrained | DistilBERT + classification head (Hugging Face Transformers, PyTorch) |
 | C | **LLM prompting** | None (zero/few-shot) | One fixed-version LLM, 3–4 prompt variants (plain zero-shot, detailed zero-shot, few-shot) |
  
-> **Pinned LLM version:** `TBD`
+> **Pinned LLM version:** `claude-haiku-5-5`
  
 ## Dataset
  
