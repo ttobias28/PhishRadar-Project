@@ -64,7 +64,7 @@ Deceptive emails are increasingly well written, and attackers now use AI to gene
 - **Adversarial (stretch):** LLM-generated phishing emails.
 - **Metrics:** precision, recall, F1, false-positive rate, confusion matrices, and error analysis of misclassified emails.
 
-**Data notes:** the source files differ in formatting (Enron and Ling are already lowercased and tokenized; the others keep their original case and punctuation). We keep this as is and report results per source, since style differences can act as a shortcut for models. An additional 18,650-email Kaggle phishing dataset was explored but excluded: about 89% of its emails also appear in the Enron, Ling, and SpamAssassin files here, so it would leak data between train and test.
+**Data notes:** the source files differ in formatting (Enron and Ling are already lowercased and tokenized; the others keep their original case and punctuation). We keep this as is and report results per source, since style differences can act as a shortcut for models. An additional 18,650-email Kaggle phishing dataset was explored but excluded: about 91% of its emails also appear in the Enron, Ling, and SpamAssassin files here, so it would leak data between train and test.
 
 ---
 
