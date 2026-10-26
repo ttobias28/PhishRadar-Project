@@ -2,7 +2,6 @@
 
 **The data files are not stored in this repository.** The emails come from third-party public datasets and include real people's messages (Enron) and real phishing samples, so they are not redistributed here. This page explains how to get them and how to rebuild the exact train/test splits used in the project.
 
-## Option A: Rebuild the data from the original sources
 
 ### 1\. Download
 
