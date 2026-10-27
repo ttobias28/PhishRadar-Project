@@ -1,0 +1,47 @@
+{
+  "source": "train.csv",
+  "criteria": [
+    "One example per category of the project's definition. Phishing: credential-style, scam/fraud, bulk ad. Legitimate: work, personal, mailing list or newsletter.",
+    "Readable emails of 250-1200 characters, picked by hand from fewshot_candidates(train_df) in src/llm_classifier.py.",
+    "Each class has the same source mix (2 Enron + 1 SpamAssassin), so lowercase (Enron) vs. original case (SpamAssassin) text can't predict the label.",
+    "The credential (21659) and scam (25535) examples resemble the Nazario and Nigerian test categories but come from train.csv only."
+  ],
+  "examples": [
+    {
+      "row_id": 21659,
+      "label": 1,
+      "category": "credential",
+      "source": "Enron"
+    },
+    {
+      "row_id": 25535,
+      "label": 1,
+      "category": "scam",
+      "source": "Enron"
+    },
+    {
+      "row_id": 21657,
+      "label": 1,
+      "category": "bulk_ad",
+      "source": "SpamAssassin"
+    },
+    {
+      "row_id": 5437,
+      "label": 0,
+      "category": "work",
+      "source": "Enron"
+    },
+    {
+      "row_id": 9763,
+      "label": 0,
+      "category": "personal",
+      "source": "Enron"
+    },
+    {
+      "row_id": 152,
+      "label": 0,
+      "category": "list",
+      "source": "SpamAssassin"
+    }
+  ]
+}
