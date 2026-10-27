@@ -1,0 +1,33 @@
+{
+  "note": "sha256 of the split CSVs in data/splits/. Compare with: sha256sum data/splits/*.csv",
+  "files": {
+    "test_ceas.csv": {
+      "sha256": "b9f604aa83e074db1d2d78e4828867b5bc5845f6ec5dd7a3176fe2b5575b8f8f",
+      "rows": 38748
+    },
+    "test_insource.csv": {
+      "sha256": "2400f37b7cd24ba53b03f7894a300607819ab246356caacc9b2853f9c514cc13",
+      "rows": 3778
+    },
+    "test_nazario.csv": {
+      "sha256": "6227b4d8645aef0cd95796c85ba8ed14a2f49f75edf61b2ce049ba04fde6b9da",
+      "rows": 1544
+    },
+    "test_nazario_paired.csv": {
+      "sha256": "98948096fda968d4779a2e0cafda60ef4afbe4b8765795a11fd64ff5e62a35eb",
+      "rows": 3088
+    },
+    "test_nigerian.csv": {
+      "sha256": "224e66b439b916385bbd90c0ffac48efdd38b0fe3c3765465a4c1a6a700db7c3",
+      "rows": 3243
+    },
+    "train.csv": {
+      "sha256": "66c9118b607bf70cb48116271b6f9d8efe2ca36ae509e5ae5017c8e969365e60",
+      "rows": 30217
+    },
+    "val.csv": {
+      "sha256": "48f754f8ee6ba8983c991885f9eaa3740e489f70d77e074edee67cdfb6dec102",
+      "rows": 3778
+    }
+  }
+}

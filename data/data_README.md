@@ -34,6 +34,8 @@ python src/make_splits.py data/cleaned data/splits
 
 Random seed is fixed (42), so everyone gets identical files.
 
+To confirm your copy is identical to the one the committed results were made with, compare `sha256sum data/splits/*.csv` with `results/samples/splits_checksums.json`.
+
 ## Final splits (`data/splits/`)
 
 All files have the columns `text`, `label` (1 = phishing/scam/spam, 0 = legitimate) and `source`.
