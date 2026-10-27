@@ -1,6 +1,6 @@
 # PhishRadar data cleaning report
 
-**Output:** `train.csv`, `val.csv`, `test.csv`, each with the columns `text`, `label` (1 = phishing, 0 = legit) and `source`. These are an **intermediate** random split. The splits used in all experiments are built from them by `src/make_splits.py` (see "Splits" below and `data/README.md`).
+**Output:** `train.csv`, `val.csv`, `test.csv`, each with the columns `text`, `label` (1 = phishing, 0 = legit) and `source`. These are an **intermediate** random split. The splits used in all experiments are built from them by `src/make_splits.py` (see "Splits" below and `data/data_README.md`).
 **Script:** `src/clean_data.py` reproduces every step below (random seed 42).
 
 ## Input data
@@ -61,7 +61,7 @@ A random 80 / 10 / 10 split, stratified by **source and label**:
 - **Cross-source tests (never trained or tuned on):** CEAS_08, Nazario and Nigerian_Fraud, after removing 1 CEAS and 9 Nigerian emails that also appear in the training sources. A paired Nazario test adds an equal number of legitimate CEAS emails so precision and false-positive rate can be computed.
 - **Checks:** the script asserts that no test email overlaps training data, exactly or by opening text.
 
-Row counts for each final file are listed in `data/README.md`. **All three approaches (TF-IDF, DistilBERT, LLM) should be scored on these final files** so the comparison is fair.
+Row counts for each final file are listed in `data/data_README.md`. **All three approaches (TF-IDF, DistilBERT, LLM) should be scored on these final files** so the comparison is fair.
 
 ## Emails by source (after cleaning, before `make_splits.py`)
 

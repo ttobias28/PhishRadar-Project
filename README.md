@@ -70,7 +70,7 @@ Deceptive emails are increasingly well written, and attackers now use AI to gene
 
 ## Setup
 
-1. **Get the data.** The CSVs are not stored in this repo. Follow the instructions in `data/README.md` to download the source datasets and rebuild the splits, or get the ready-made splits from the team.
+1. **Get the data.** The CSVs are not stored in this repo. Follow the instructions in `data/data_README.md` to download the source datasets and rebuild the splits, or get the ready-made splits from the team.
 2. **Run a notebook in Google Colab** (recommended): upload the notebook (File → Upload notebook) and run the cells top to bottom. The TF-IDF notebook reads the CSVs from Google Drive at `MyDrive/phishradar/data/splits/` and needs no GPU. The DistilBERT notebook needs a GPU (Runtime → Change runtime type → T4 GPU) and asks you to upload the splits zip when you run it.
 3. **Or run locally** with Python 3.10+: `pip install -r requirements.txt`, put the CSVs in `data/splits/`, and open the notebook in Jupyter or VS Code.
 4. **LLM approach:** needs an API key in a local `.env` file (see `.env.example`). Never commit it.
