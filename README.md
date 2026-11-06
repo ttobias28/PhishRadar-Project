@@ -34,7 +34,7 @@ Deceptive emails are increasingly well written, and attackers now use AI to gene
  
 | # | Approach | Training? | Details |
 |---|---|---|---|
-| A | **Classical ML** | Trained from scratch | TF-IDF features + Logistic Regression / SVM (scikit-learn) |
+| A | **Classical ML** | Trained from scratch | TF-IDF features + Logistic Regression (scikit-learn) |
 | B | **Fine-tuned DistilBERT** | Fine-tuned from pretrained | DistilBERT + classification head (Hugging Face Transformers, PyTorch) |
 | C | **LLM prompting** | None (zero/few-shot) | One fixed-version LLM, 3–4 prompt variants (plain zero-shot, detailed zero-shot, few-shot) |
  
