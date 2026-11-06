@@ -22,3 +22,8 @@ checkpoints/
 
 # LLM cache (may contain email text)
 results/llm_cache/
+
+# saved models and error files (contain email-derived data)
+models/
+*.joblib
+errors/
