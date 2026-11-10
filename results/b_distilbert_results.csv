@@ -1,0 +1,2 @@
+model,recall_original,recall_polished,caught_then_missed,missed_then_caught,mcnemar_p,fpr_original,fpr_polished,phishing_pairs,legit_pairs
+distilbert,0.983,0.983,0,0,1.0,0.064,0.064,176,297
