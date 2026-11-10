@@ -27,3 +27,6 @@ results/llm_cache/
 models/
 *.joblib
 errors/
+
+# experiment B
+b_data/
