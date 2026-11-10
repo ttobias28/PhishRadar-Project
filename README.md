@@ -25,10 +25,12 @@ Deceptive emails are increasingly well written, and attackers now use AI to gene
  
 **Research questions**
 1. How do classical ML, a fine-tuned DistilBERT model, and a prompted LLM compare on precision, recall, F1, and false-positive rate?
-2. How well does each approach **generalize across sources** (train on some email corpora, test on others)?
+2. How well does each approach **generalize across sources** (train on some email corpora, test on others), and why do detectors fail on new sources?
 3. Does a model trained on mostly spam and scam email also catch **true credential phishing**?
-4. How sensitive is the LLM approach to **prompt wording** (zero-shot vs. few-shot)?
-5. *(Stretch)* Do the models hold up against **LLM-generated phishing emails**?
+4. How sensitive is the LLM approach to **prompt wording** (plain zero-shot, detailed zero-shot, few-shot, intent-focused)?
+5. **Experiment A:** can **source-invariant training** (making DistilBERT unable to tell which corpus an email came from) improve cross-source generalization? *(Status: planned, not yet run.)*
+6. **Experiment B ("AI polish"):** do detectors catch phishing because of *what it says* or because it *looks sloppy*? An LLM copy-edits real phishing emails, and we compare each model's detections before and after.
+7. *(Stretch)* Do the models hold up against **LLM-generated phishing emails**?
 
 ## Approaches Compared
  
@@ -36,35 +38,65 @@ Deceptive emails are increasingly well written, and attackers now use AI to gene
 |---|---|---|---|
 | A | **Classical ML** | Trained from scratch | TF-IDF features + Logistic Regression (scikit-learn) |
 | B | **Fine-tuned DistilBERT** | Fine-tuned from pretrained | DistilBERT + classification head (Hugging Face Transformers, PyTorch) |
-| C | **LLM prompting** | None (zero/few-shot) | One fixed-version LLM, 3–4 prompt variants (plain zero-shot, detailed zero-shot, few-shot) |
+| C | **LLM prompting** | None (zero/few-shot) | One fixed-version LLM, 4 prompt variants (plain zero-shot, detailed zero-shot, few-shot, intent-focused) |
  
-> **Pinned LLM version:** `claude-haiku-5-5`
+> **Pinned LLM versions:** classifier `claude-haiku-5-5` (temperature 0; the four prompts in `prompts/` were frozen before the test runs, with fingerprints in `results/llm_prompt_hashes.json`). Experiment B rewriter: `claude-sonnet-5-5` (prompt `prompts/rewrite_polish.txt`).
  
 ## Dataset
- 
-**Primary dataset:** [Phishing Email Dataset (Kaggle, naserabdullahalam)](https://www.kaggle.com/datasets/naserabdullahalam/phishing-email-dataset): 82,486 emails (42,891 label 1 / 39,595 label 0) from six public corpora, distributed as one combined file plus one file per source.
- 
-| Source file | Rows | Notes |
-|---|---|---|
-| `CEAS_08.csv` | 39,154 | Spam + legitimate; has sender, receiver, date, urls |
-| `Enron.csv` | 29,767 | Spam + legitimate; subject, body only |
-| `Ling.csv` | 2,859 | Spam + legitimate; subject, body only |
-| `SpamAssasin.csv` | 5,809 | Spam + legitimate; has metadata columns |
-| `Nazario.csv` | 1,565 | **Phishing only**; real credential-phishing emails |
-| `Nigerian_Fraud.csv` | 3,332 | **Phishing only**; advance-fee fraud |
-| `phishing_email.csv` | 82,486 | Combined file: `text_combined`, `label` (no source column) |
 
-### Processed schema
-`text` (subject + body), `label` (0/1), `source` (which corpus the email came from). The combined file has no source column, so we rebuild it from the per-source files.
- 
-### Evaluation Protocol
-- **In-source:** Enron, Ling, and SpamAssassin are split into train/validation/test (80/10/10), with near-duplicate mass-mailed emails kept together so templates cannot leak between splits.
-- **Cross-source (main experiment):** models train on Enron + Ling + SpamAssassin and are tested on CEAS_08, Nazario, and Nigerian_Fraud, which they never saw. Nazario and Nigerian contain no legitimate emails, so we report recall on them. We also test Nazario paired 50/50 with held-out legitimate CEAS emails to measure precision and false-positive rate.
-- **Optional extra true-phishing test:** real phishing samples from phishing_pot, if time allows.
-- **Adversarial (stretch):** LLM-generated phishing emails.
+**Primary dataset:** [Phishing Email Dataset (Kaggle, naserabdullahalam)](https://www.kaggle.com/datasets/naserabdullahalam/phishing-email-dataset): 82,486 emails from six public corpora (Enron, Ling, SpamAssassin, CEAS_08, Nazario, Nigerian Fraud). The source files, splits, schema and known limitations are described in [`data/README.md`](data/README.md). The emails themselves are not stored in this repo.
+
+**Evaluation protocol**
+- **In-source:** Enron, Ling, and SpamAssassin are split 80/10/10 into train/validation/test, with near-duplicate mass-mailed emails kept together so templates cannot leak between splits.
+- **Cross-source (main experiment):** models train on Enron + Ling + SpamAssassin and are tested on CEAS_08, Nazario, and Nigerian_Fraud, which they never saw. Nazario and Nigerian contain no legitimate emails, so only recall is reported on them. Nazario paired 50/50 with held-out legitimate CEAS emails measures precision and false-positive rate.
 - **Metrics:** precision, recall, F1, false-positive rate, confusion matrices, and error analysis of misclassified emails.
 
-**Data notes:** the source files differ in formatting (Enron and Ling are already lowercased and tokenized; the others keep their original case and punctuation). We keep this as is and report results per source, since style differences can act as a shortcut for models. An additional 18,650-email Kaggle phishing dataset was explored but excluded: about 91% of its emails also appear in the Enron, Ling, and SpamAssassin files here, so it would leak data between train and test.
+---
+
+## Results
+
+All numbers are in `results/` (summary tables) and `results/predictions/` (one file per model and test set: `row_id, y_true, y_pred, score`). Precision, F1 and FPR are not defined on Nazario and Nigerian because they contain only phishing, so only recall is reported there.
+
+### Cross-source results (positive class = phishing/scam)
+
+| Approach | In-source recall | In-source F1 | In-source FPR | CEAS recall | CEAS FPR | Nazario recall | Nigerian recall |
+|---|---|---|---|---|---|---|---|
+| TF-IDF + Logistic Regression | 0.9912 | 0.9899 | 0.0082 | 0.8500 | 0.0896 | 0.7902 | 0.9935 |
+| DistilBERT (full training set) | 0.9918 | 0.9906 | 0.0078 | 0.8537 | 0.0645 | 0.8128 | 0.9935 |
+| LLM, plain zero-shot † | 0.9179 | 0.9524 | 0.0068 | 0.7588 | 0.0329 | 0.9780 | 0.9980 |
+| LLM, detailed zero-shot † | 0.8937 | 0.9415 | 0.0034 | 0.7588 | 0.0288 | 0.9780 | 0.9980 |
+| LLM, few-shot † | 0.8986 | 0.9418 | 0.0068 | 0.7588 | 0.0288 | 0.9840 | 0.9980 |
+| LLM, intent-focused † | 0.8792 | 0.9333 | 0.0034 | 0.7588 | 0.0165 | 0.9760 | 0.9960 |
+
+† The LLM was scored on a fixed random sample of 500 emails per test set (row IDs in `results/llm_sample_ids.csv`), not on the full sets. Emails the model refused to answer (up to 3.4% on the in-source set) are scored as predicted legitimate.
+
+**What stands out**
+- All three approaches score about 99% in-source and drop on unseen sources. The fine-tuned DistilBERT misses about 19% of Nazario credential phishing and flags 6.5% of legitimate CEAS emails; TF-IDF is slightly worse on both measures (Nazario recall 0.79, CEAS false positives 9.0%).
+- The LLM catches far more Nazario phishing (about 0.98 recall) but misses more of CEAS (recall 0.76). The four prompt variants differ little, and most gaps are within sampling noise at 500 emails per set.
+- TF-IDF diagnostics (*leave-one-source-out*: train on three sources, test on the fourth; *style removal*: lowercase and strip links, numbers and punctuation, then retrain): holding out Enron drops Nazario recall to 0.29 (vs. 0.79 with the main split), and removing style cues lowers CEAS recall from 0.85 to 0.78. Full tables: `results/tfidf_leave_one_source_out.csv` and `results/tfidf_normalized_vs_original.csv`.
+
+### Experiment B: AI polish
+
+An LLM (`claude-sonnet-5-5`) copy-edited 150 Nazario and 150 Nigerian phishing emails (spelling, grammar and formatting only), with 300 legitimate CEAS emails as a control, all truncated to 1,500 characters. Each model scored the original and the rewrite of the same email, and a McNemar test checks whether detections change.
+
+| Model | Phishing recall (original → polished) | Caught→missed / missed→caught | McNemar p | FPR on legitimate (original → polished) |
+|---|---|---|---|---|
+| TF-IDF + Logistic Regression | 0.9773 → 0.9830 | 0 / 1 | 1.00 | 0.0842 → 0.0875 |
+| DistilBERT | 0.9830 → 0.9830 | 0 / 0 | 1.00 | 0.0640 → 0.0640 |
+| LLM, plain zero-shot | 0.9943 → 0.9943 | 0 / 0 | 1.00 | 0.0101 → 0.0135 |
+| LLM, detailed zero-shot | 0.9943 → 0.9943 | 0 / 0 | 1.00 | 0.0034 → 0.0034 |
+| LLM, few-shot | 0.9943 → 0.9886 | 1 / 0 | 1.00 | 0.0135 → 0.0135 |
+| LLM, intent-focused | 0.9943 → 0.9943 | 0 / 0 | 1.00 | 0.0101 → 0.0034 |
+
+176 phishing pairs (149 Nigerian, 27 Nazario) and 297 legitimate pairs.
+
+**Result: no measurable effect.** No model's detections changed significantly after polishing (every McNemar p = 1.00, with at most one email changing in either direction).
+
+**Caveats**
+- The rewriter refused 127 of 600 emails, including 123 of the 150 Nazario credential-phishing emails, so the Nazario part rests on only 27 pairs and is not a representative sample.
+- Nigerian-scam recall was already about 99%, which leaves little room to detect a drop.
+- The edit was copy-editing only (spelling, grammar, formatting), so the wording stayed close to the original.
+- A manual check that the rewrites kept the original intent has not been completed.
 
 ---
 
@@ -72,13 +104,8 @@ Deceptive emails are increasingly well written, and attackers now use AI to gene
 
 1. **Get the data.** The CSVs are not stored in this repo. Follow the instructions in `data/README.md` to download the source datasets and rebuild the splits, or get the ready-made splits from the team.
 2. **Run a notebook in Google Colab** (recommended): upload the notebook (File → Upload notebook) and run the cells top to bottom. The TF-IDF notebook reads the CSVs from Google Drive at `MyDrive/phishradar/data/splits/` and needs no GPU. The DistilBERT notebook needs a GPU (Runtime → Change runtime type → T4 GPU) and asks you to upload the splits zip when you run it.
-3. **Or run locally** with Python 3.10+: `pip install -r requirements.txt`, put the CSVs in `data/splits/`, and open the notebook in Jupyter or VS Code.
-4. **LLM approach:** needs an API key in a local `.env` file (see `.env.example`). Never commit it.
-
-### Requirements
-- Python 3.10+
-- A GPU is strongly recommended for DistilBERT fine-tuning (free Google Colab GPU is sufficient)
-- An API key for the chosen LLM provider (only needed for Approach C and adversarial generation)
+3. **Or run locally** with Python 3.10+ (DistilBERT needs a GPU; a free Colab T4 is enough): `pip install -r requirements.txt`, put the CSVs in `data/splits/`, and open the notebook in Jupyter or VS Code.
+4. **LLM approach:** open `PhishRadar_LLM.ipynb` in Colab (no GPU needed). It needs an Anthropic API key, stored in Colab Secrets as `ANTHROPIC_API_KEY` or in a local `.env` file (see `.env.example`). Never commit your key. The full run makes roughly 15,000 API calls; answers are cached in your Drive, so re-running is free.
 
 ---
 
@@ -87,12 +114,14 @@ Deceptive emails are increasingly well written, and attackers now use AI to gene
 - The positive class is mostly spam and scam rather than credential phishing, and several sources are old (Enron-era corpora).
 - Source corpora differ in style and formatting, which can inflate in-source scores. This is why cross-source evaluation is central to the study.
 - Two sources contain only positive emails, which limits what can be measured on them.
-- LLM results depend on the specific model version and prompts used.
+- LLM results depend on the specific model version and prompts used. The LLM was scored on 500-email samples, and a few percent of emails were refused by the API's safety filter (counted as predicted legitimate).
 - *Future work:* URL/website-based detection as a secondary task, more recent real-world phishing data, and testing on live mailboxes.
 
 ## Contributions
 
-*(To be filled in as the project progresses. Each member's specific contributions are also recoverable from the Git commit history.)*
+Individual contributions are documented in the project report and in the commit history.
+
+**AI assistance.** Claude (Anthropic) was used as an AI assistant for code, notebook debugging, and drafting. The LLM approach itself calls Claude models through the API. All results in this repository were produced by running the code in this repository.
 
 ## License and Disclaimer
 
