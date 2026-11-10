@@ -1,0 +1,2 @@
+model,recall_original,recall_polished,caught_then_missed,missed_then_caught,mcnemar_p,fpr_original,fpr_polished,phishing_pairs,legit_pairs
+tfidf,0.9773,0.983,0,1,1.0,0.0842,0.0875,176,297
