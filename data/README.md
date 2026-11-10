@@ -76,4 +76,4 @@ All files have the columns `text`, `label` (1 = phishing/scam/spam, 0 = legitima
 
 ## Responsible use
 
-These emails are for research and education only. Do not use them, or any phishing examples in `adversarial/`, in live environments.
+These emails are for research and education only. Do not use them in live environments.
