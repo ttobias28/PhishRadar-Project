@@ -30,7 +30,6 @@ Deceptive emails are increasingly well written, and attackers now use AI to gene
 4. How sensitive is the LLM approach to **prompt wording** (plain zero-shot, detailed zero-shot, few-shot, intent-focused)?
 5. **Experiment A:** can **source-invariant training** (making DistilBERT unable to tell which corpus an email came from) improve cross-source generalization? *(Status: planned, not yet run.)*
 6. **Experiment B ("AI polish"):** do detectors catch phishing because of *what it says* or because it *looks sloppy*? An LLM copy-edits real phishing emails, and we compare each model's detections before and after.
-7. *(Stretch)* Do the models hold up against **LLM-generated phishing emails**?
 
 ## Approaches Compared
  
