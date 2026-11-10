@@ -1,4 +1,4 @@
-# data (never commit)
+# data (large; rebuilt with src/make_splits.py, see data/README.md)
 data/raw/
 data/cleaned/
 data/splits/
@@ -20,10 +20,10 @@ __pycache__/
 *.safetensors
 checkpoints/
 
-# LLM cache (may contain email text)
+# LLM response cache (large, rebuildable)
 results/llm_cache/
 
-# saved models and error files (contain email-derived data)
+# saved models and error files
 models/
 *.joblib
 errors/
