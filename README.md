@@ -28,7 +28,7 @@ Deceptive emails are increasingly well written, and attackers now use AI to gene
 2. How well does each approach **generalize across sources** (train on some email corpora, test on others), and why do detectors fail on new sources?
 3. Does a model trained on mostly spam and scam email also catch **true credential phishing**?
 4. How sensitive is the LLM approach to **prompt wording** (plain zero-shot, detailed zero-shot, few-shot, intent-focused)?
-5. **Experiment A:** can **source-invariant training** (making DistilBERT unable to tell which corpus an email came from) improve cross-source generalization? *(Status: planned, not yet run.)*
+5. **Experiment A:** can **source-invariant training** (making DistilBERT unable to tell which corpus an email came from) improve cross-source generalization? *(Status: in progress.)*
 6. **Experiment B ("AI polish"):** do detectors catch phishing because of *what it says* or because it *looks sloppy*? An LLM copy-edits real phishing emails, and we compare each model's detections before and after.
 
 ## Approaches Compared
@@ -95,26 +95,43 @@ An LLM (`claude-sonnet-5-5`) copy-edited 150 Nazario and 150 Nigerian phishing e
 - The rewriter refused 127 of 600 emails, including 123 of the 150 Nazario credential-phishing emails, so the Nazario part rests on only 27 pairs and is not a representative sample.
 - Nigerian-scam recall was already about 99%, which leaves little room to detect a drop.
 - The edit was copy-editing only (spelling, grammar, formatting), so the wording stayed close to the original.
-- A manual check that the rewrites kept the original intent has not been completed.
+- A manual check that the rewrites kept the original intent has been completed.
 
 ---
 
 ## Setup
 
-1. **Get the data.** The CSVs are not stored in this repo. Follow the instructions in `data/README.md` to download the source datasets and rebuild the splits, or get the ready-made splits from the team.
-2. **Run a notebook in Google Colab** (recommended): upload the notebook (File → Upload notebook) and run the cells top to bottom. The TF-IDF notebook reads the CSVs from Google Drive at `MyDrive/phishradar/data/splits/` and needs no GPU. The DistilBERT notebook needs a GPU (Runtime → Change runtime type → T4 GPU) and asks you to upload the splits zip when you run it.
-3. **Or run locally** with Python 3.10+ (DistilBERT needs a GPU; a free Colab T4 is enough): `pip install -r requirements.txt`, put the CSVs in `data/splits/`, and open the notebook in Jupyter or VS Code.
-4. **LLM approach:** open `PhishRadar_LLM.ipynb` in Colab (no GPU needed). It needs an Anthropic API key, stored in Colab Secrets as `ANTHROPIC_API_KEY` or in a local `.env` file (see `.env.example`). Never commit your key. The full run makes roughly 15,000 API calls; answers are cached in your Drive, so re-running is free.
+**Requirements:** Python 3.10+ and `pip install -r requirements.txt` for local runs. The notebooks are written for Google Colab; only DistilBERT needs a GPU (Runtime → Change runtime type → T4).
+
+**1. Build the data** (the emails are not stored in this repo). Download the two Kaggle datasets into `data/raw/` as described in [`data/README.md`](data/README.md), then run:
+
+```
+python src/clean_data.py data/raw/phishing_email_dataset data/raw/phishing_email_detection data/cleaned
+python src/make_splits.py data/cleaned data/splits
+```
+
+For Colab, put the resulting CSVs in `MyDrive/phishradar/data/splits/` (the notebooks read and write under `MyDrive/phishradar/`).
+
+**2. Run the notebooks in this order** (each one: open in Colab, then Runtime → Run all):
+
+| Step | Notebook | Needs | Produces |
+|---|---|---|---|
+| 1 | `PhishRadar_tfidf_baseline.ipynb` | CPU | `results/predictions/tfidf_*.csv`, TF-IDF tables |
+| 2 | `PhishRadar_DistilBERT.ipynb` | T4 GPU, splits zip upload | `results/predictions/distilbert_*.csv` |
+| 3 | `PhishRadar_LLM.ipynb` | Anthropic API key | `results/predictions/llm_*.csv`, Experiment B rewrites (`b_data/`) |
+| 4 | Experiment B sections at the end of the TF-IDF and DistilBERT notebooks | output of step 3 | `results/b_predictions/` |
+| 5 | `PhishRadar_comparison.ipynb` | CPU, the prediction files above | comparison tables, McNemar tests, charts, error analysis |
+
+The LLM notebook reads `ANTHROPIC_API_KEY` from Colab Secrets or a local `.env` file (see `.env.example`; never commit your key). The full run makes roughly 15,000 paid API calls, cached in your Drive so re-runs are free. **To check the results without re-running anything**, the prediction files are already in `results/`, so you can run only step 5.
 
 ---
 
-## Limitations and Future Work
+## Limitations
 
 - The positive class is mostly spam and scam rather than credential phishing, and several sources are old (Enron-era corpora).
 - Source corpora differ in style and formatting, which can inflate in-source scores. This is why cross-source evaluation is central to the study.
 - Two sources contain only positive emails, which limits what can be measured on them.
 - LLM results depend on the specific model version and prompts used. The LLM was scored on 500-email samples, and a few percent of emails were refused by the API's safety filter (counted as predicted legitimate).
-- *Future work:* URL/website-based detection as a secondary task, more recent real-world phishing data, and testing on live mailboxes.
 
 ## Contributions
 
