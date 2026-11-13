@@ -1,0 +1,33 @@
+{
+  "run_id": "A-run4-full",
+  "finished_utc": "2026-11-13T17:54:37+00:00",
+  "settings": {
+    "MODEL_NAME": "distilbert-base-uncased",
+    "MAX_LENGTH": 256,
+    "EPOCHS": 2,
+    "LEARNING_RATE": 2e-05,
+    "BATCH_SIZE": 16,
+    "SEED": 42,
+    "SAMPLE_SIZE": null,
+    "NORMALIZE_SPACING": true,
+    "VARIANTS": [
+      "baseline",
+      "balanced",
+      "source_invariant"
+    ],
+    "ADV_WEIGHT": 1.0,
+    "ADV_LR": 0.001,
+    "MAX_WEIGHT": 10.0,
+    "SAVE_VARIANT": "source_invariant",
+    "N_BOOT": 1000
+  },
+  "adversary": "Sequential(\n  (0): Linear(in_features=768, out_features=512, bias=True)\n  (1): ReLU()\n  (2): Dropout(p=0.1, inplace=False)\n  (3): Linear(in_features=512, out_features=512, bias=True)\n  (4): ReLU()\n  (5): Dropout(p=0.1, inplace=False)\n  (6): Linear(in_features=512, out_features=6, bias=True)\n)",
+  "train_emails": 30217,
+  "val_emails": 3778,
+  "versions": {
+    "torch": "2.14.1+cu130",
+    "transformers": "5.22.1",
+    "python": "3.13.16"
+  },
+  "gpu": "Tesla T4"
+}

@@ -1,0 +1,11 @@
+test_set,variant,only baseline right,only variant right,p-value
+test_insource,balanced,7,9,0.8036
+test_insource,source_invariant,17,7,0.0639
+test_ceas,balanced,383,116,0.0
+test_ceas,source_invariant,502,137,0.0
+test_nazario_paired,balanced,49,47,0.9188
+test_nazario_paired,source_invariant,106,58,0.0002
+test_nazario,balanced,42,36,0.5716
+test_nazario,source_invariant,92,47,0.0002
+test_nigerian,balanced,1,0,1.0
+test_nigerian,source_invariant,4,2,0.6875
