@@ -70,13 +70,29 @@ All numbers are in `results/` (summary tables) and `results/predictions/` (one f
 † The LLM was scored on a fixed random sample of 500 emails per test set (row IDs in `results/llm_sample_ids.csv`), not on the full sets. Emails the model refused to answer (up to 3.4% on the in-source set) are scored as predicted legitimate.
 
 **What stands out**
-- All three approaches score about 99% in-source and drop on unseen sources. The fine-tuned DistilBERT misses about 19% of Nazario credential phishing and flags 6.5% of legitimate CEAS emails; TF-IDF is slightly worse on both measures (Nazario recall 0.79, CEAS false positives 9.0%).
-- The LLM catches far more Nazario phishing (about 0.98 recall) but misses more of CEAS (recall 0.76). The four prompt variants differ little, and most gaps are within sampling noise at 500 emails per set.
-- TF-IDF diagnostics (*leave-one-source-out*: train on three sources, test on the fourth; *style removal*: lowercase and strip links, numbers and punctuation, then retrain): holding out Enron drops Nazario recall to 0.29 (vs. 0.79 with the main split), and removing style cues lowers CEAS recall from 0.85 to 0.78. Full tables: `results/tfidf_leave_one_source_out.csv` and `results/tfidf_normalized_vs_original.csv`.
+* All three approaches score about 99% in-source and drop on unseen sources. DistilBERT misses about 19% of Nazario phishing and flags 6.5% of legitimate CEAS emails; TF-IDF is slightly worse on both.
+* The LLM catches far more Nazario phishing (about 0.98 recall) but misses more of CEAS (0.76). The four prompts differ little, and most gaps are within sampling noise at 500 emails per set.
+* TF-IDF diagnostics: holding out Enron drops Nazario recall to 0.29 (vs. 0.79), and removing style cues lowers CEAS recall from 0.85 to 0.78 (`results/tfidf_leave_one_source_out.csv`, `results/tfidf_normalized_vs_original.csv`).
+
+### Experiment A: source-invariant training
+
+The training sources differ in style and in their share of phishing, so "which collection is this from?" is a shortcut that partly predicts the label. Experiment A tests whether removing it helps, using three DistilBERT versions with identical settings: `baseline`, `balanced` (each source-and-label combination weighted equally) and `source_invariant` (balanced, plus an adversary that tries to guess the source while DistilBERT learns to make it fail). Notebook: `PhishRadar_DistilBERT_SourceInvariant.ipynb`.
+
+| Version | In-source F1 | CEAS F1 | CEAS FPR | Nazario recall | Nazario-paired F1 | Nigerian recall | Source probe † |
+|---|---|---|---|---|---|---|---|
+| Baseline | 0.9893 | 0.8990 | 0.0621 | 0.8238 | 0.8712 | 0.9938 | 0.791 |
+| Balanced | 0.9899 | 0.8919 | 0.0637 | 0.8199 | 0.8701 | 0.9935 | 0.766 |
+| Source-invariant | 0.9861 | 0.8895 | 0.0662 | 0.7947 | 0.8527 | 0.9932 | 0.792 |
+
+† How well a simple classifier can still guess the source from the model's internal representation (chance is about 0.33). Lower means less source information.
+
+**Result: removing the shortcut did not help.** Balancing gave no gain on Nazario (McNemar p = 0.57) and a small drop in CEAS F1 (p < 0.001). The adversarial version was significantly worse on Nazario recall (0.7947 vs. 0.8238, p = 0.0002), and its probe score did not drop, so it did not remove the source information. Full tables: `results/si_*.csv`.
+
+**Caveats:** one seed per version; this baseline is a separate retrain, so it differs slightly from the main DistilBERT row; and the adversary's learning rate and size were adjusted once after seeing quick-run test scores (all runs are logged in the notebook).
 
 ### Experiment B: AI polish
 
-An LLM (`claude-sonnet-5-5`) copy-edited 150 Nazario and 150 Nigerian phishing emails (spelling, grammar and formatting only), with 300 legitimate CEAS emails as a control, all truncated to 1,500 characters. Each model scored the original and the rewrite of the same email, and a McNemar test checks whether detections change.
+An LLM (`claude-sonnet-5-5`) copy-edited 150 Nazario and 150 Nigerian phishing emails (spelling, grammar, formatting), with 300 legitimate CEAS emails as a control. Each model scored the original and the rewrite, and a McNemar test checks whether detections change.
 
 | Model | Phishing recall (original → polished) | Caught→missed / missed→caught | McNemar p | FPR on legitimate (original → polished) |
 |---|---|---|---|---|
@@ -89,13 +105,9 @@ An LLM (`claude-sonnet-5-5`) copy-edited 150 Nazario and 150 Nigerian phishing e
 
 176 phishing pairs (149 Nigerian, 27 Nazario) and 297 legitimate pairs.
 
-**Result: no measurable effect.** No model's detections changed significantly after polishing (every McNemar p = 1.00, with at most one email changing in either direction).
+**Result: no measurable effect.** Every McNemar p = 1.00, with at most one email changing.
 
-**Caveats**
-- The rewriter refused 127 of 600 emails, including 123 of the 150 Nazario credential-phishing emails, so the Nazario part rests on only 27 pairs and is not a representative sample.
-- Nigerian-scam recall was already about 99%, which leaves little room to detect a drop.
-- The edit was copy-editing only (spelling, grammar, formatting), so the wording stayed close to the original.
-- A manual check that the rewrites kept the original intent has been completed.
+**Caveats:** the rewriter refused 127 of 600 emails (123 of the 150 Nazario), so Nazario rests on only 27 pairs; Nigerian recall was already about 99%, leaving little room for a drop; and the edit was copy-editing only. A manual check that the rewrites kept the original intent has been completed.
 
 ---
 
@@ -117,12 +129,29 @@ For Colab, put the resulting CSVs in `MyDrive/phishradar/data/splits/` (the note
 | Step | Notebook | Needs | Produces |
 |---|---|---|---|
 | 1 | `PhishRadar_tfidf_baseline.ipynb` | CPU | `results/predictions/tfidf_*.csv`, TF-IDF tables |
-| 2 | `PhishRadar_DistilBERT.ipynb` | T4 GPU, splits zip upload | `results/predictions/distilbert_*.csv` |
-| 3 | `PhishRadar_LLM.ipynb` | Anthropic API key | `results/predictions/llm_*.csv`, Experiment B rewrites (`b_data/`) |
-| 4 | Experiment B sections at the end of the TF-IDF and DistilBERT notebooks | output of step 3 | `results/b_predictions/` |
-| 5 | `PhishRadar_comparison.ipynb` | CPU, the prediction files above | comparison tables, McNemar tests, charts, error analysis |
+| 2 | `PhishRadar_DistilBERT.ipynb` | T4 GPU, splits in Drive | `results/predictions/distilbert_*.csv` |
+| 3 | `PhishRadar_DistilBERT_SourceInvariant.ipynb` (Experiment A) | T4 GPU (about 2 hours), splits in Drive | `results/predictions/distilbert_{baseline,balanced,source_invariant}_*.csv`, `results/si_*` |
+| 4 | `PhishRadar_LLM.ipynb` | Anthropic API key | `results/predictions/llm_*.csv`, Experiment B rewrites (`b_data/`) |
+| 5 | Experiment B sections at the end of the TF-IDF and DistilBERT notebooks | output of step 4 | `results/b_predictions/` |
+| 6 | `PhishRadar_comparison.ipynb` | CPU, all prediction files above (steps 1–5) | comparison tables, McNemar tests, charts, error analysis |
 
-The LLM notebook reads `ANTHROPIC_API_KEY` from Colab Secrets or a local `.env` file (see `.env.example`; never commit your key). The full run makes roughly 15,000 paid API calls, cached in your Drive so re-runs are free. **To check the results without re-running anything**, the prediction files are already in `results/`, so you can run only step 5.
+The LLM notebook reads `ANTHROPIC_API_KEY` from Colab Secrets or a local `.env` file (see `.env.example`; never commit your key). The full run makes roughly 15,000 paid API calls, cached in your Drive so re-runs are free. **To check the results without re-running anything**, the prediction files are already in `results/`, so you can run only step 6.
+
+**Colab folder layout.** All five notebooks read and write under `MyDrive/phishradar/`:
+* `data/splits/`: the split CSVs from step 1
+* `results/predictions/` and `results/b_predictions/`: prediction files written by the model notebooks and read by the comparison notebook
+* `b_data/`: Experiment B rewrites (from the LLM notebook)
+* `models/`: saved DistilBERT models (not committed; about 250 MB each)
+
+Allow the Google Drive connection when a notebook asks.
+
+**Reproducing without retraining.** Copy this repo's `results/predictions/` and `results/b_predictions/` folders into `MyDrive/phishradar/results/`, put the splits in `MyDrive/phishradar/data/splits/`, then run `PhishRadar_comparison.ipynb`.
+
+**Sanity check.** A correct run gives about: TF-IDF in-source F1 0.99 and CEAS recall 0.85; DistilBERT Nazario recall 0.81; LLM Nazario recall 0.98. GPU training can differ from our numbers by about a point.
+
+**Time and cost (approximate).** TF-IDF: minutes on CPU. DistilBERT: about 15 minutes for a quick test (`SAMPLE_SIZE = 5000`); the full run on all ~30,000 training emails takes roughly an hour on a T4. Experiment A: about 2 hours on a T4. LLM: about 15,000 paid API calls (about $5.00), cached afterwards. Comparison: a few minutes.
+
+Tested with Python 3.13, torch 2.14, transformers 5.22. `requirements.txt` is not version-pinned.
 
 ---
 
