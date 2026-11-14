@@ -1,0 +1,7 @@
+model,phishing pairs,legit pairs,recall orig,recall polished,FPR orig,FPR polished,caught→missed,missed→caught,legit flips,McNemar p (phishing)
+distilbert,176,297,0.983,0.983,0.064,0.064,0,0,6,1.0
+llm_few_shot,176,297,0.9943,0.9886,0.0135,0.0135,1,0,2,1.0
+llm_intent_focused,176,297,0.9943,0.9943,0.0101,0.0034,0,0,2,1.0
+llm_zero_shot_detailed,176,297,0.9943,0.9943,0.0034,0.0034,0,0,0,1.0
+llm_zero_shot_plain,176,297,0.9943,0.9943,0.0101,0.0135,0,0,3,1.0
+tfidf,176,297,0.9773,0.983,0.0842,0.0875,0,1,5,1.0
