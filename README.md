@@ -162,12 +162,6 @@ Tested with Python 3.13, torch 2.14, transformers 5.22. `requirements.txt` is no
 - Two sources contain only positive emails, which limits what can be measured on them.
 - LLM results depend on the specific model version and prompts used. The LLM was scored on 500-email samples, and a few percent of emails were refused by the API's safety filter (counted as predicted legitimate).
 
-## Contributions
-
-Individual contributions are documented in the project report and in the commit history.
-
-**AI assistance.** Claude (Anthropic) was used as an AI assistant for code, notebook debugging, and drafting. The LLM approach itself calls Claude models through the API. All results in this repository were produced by running the code in this repository.
-
 ## License and Disclaimer
 
 This project is for educational purposes as part of CSC 4240. Phishing examples in this repository are used for research only and must not be used in live environments.
