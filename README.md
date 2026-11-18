@@ -149,7 +149,7 @@ Allow the Google Drive connection when a notebook asks.
 
 **Sanity check.** A correct run gives about: TF-IDF in-source F1 0.99 and CEAS recall 0.85; DistilBERT Nazario recall 0.81; LLM Nazario recall 0.98. GPU training can differ from our numbers by about a point.
 
-**Time and cost (approximate).** TF-IDF: minutes on CPU. DistilBERT: about 10 minutes for a quick test (`SAMPLE_SIZE = 5000`); the full run on all ~30,000 training emails takes roughly an hour on a T4. Experiment A: about 2 hours on a T4. LLM: about 15,000 paid API calls (about $5.00), cached afterwards. Comparison: a few minutes.
+**Time and cost (approximate).** TF-IDF: minutes on CPU. DistilBERT: about 10 minutes for a quick test (SAMPLE_SIZE = 5000), and about 20 minutes for the full run on all ~30,000 training emails on a T4. Experiment A: about 2 hours on a T4. LLM: about 15,000 paid API calls (about $5.00), cached afterwards. Comparison: a few minutes.
 
 Tested with Python 3.13, torch 2.14, transformers 5.22. `requirements.txt` is not version-pinned.
 
