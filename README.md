@@ -111,47 +111,103 @@ An LLM (`claude-sonnet-5-5`) copy-edited 150 Nazario and 150 Nigerian phishing e
 
 ---
 
-## Setup
+## Setup and how to run
 
-**Requirements:** Python 3.10+ and `pip install -r requirements.txt` for local runs. The notebooks are written for Google Colab; only DistilBERT needs a GPU (Runtime → Change runtime type → T4).
+There are three ways to use this project. Pick the one that matches what you want to do.
 
-**1. Build the data** (the emails are not stored in this repo). Download the two Kaggle datasets into `data/raw/` as described in [`data/README.md`](data/README.md), then run:
+| I want to... | Do this | Needs | Time |
+|---|---|---|---|
+| **Check the results quickly** | [Quick check](#a-quick-check-no-data-no-gpu-no-api-key) | Python only | about 5 minutes |
+| **Re-run everything in Google Colab** | [Full run in Colab](#b-full-run-in-google-colab) | Google account, Kaggle account, Anthropic API key | several hours |
+| **Run in VS Code or Jupyter on my own computer** | [Running locally](#c-running-locally-vs-code-or-jupyter) | Python; a GPU for DistilBERT | depends on hardware |
+
+**Requirements:** Python 3.10 or newer. Install the libraries with `pip install -r requirements.txt` (a virtual environment is recommended). Tested with Python 3.13, torch 2.14 and transformers 5.22; `requirements.txt` is not version-pinned. You only need the accounts listed for the steps you run: a Kaggle account to download the data, a Google account for Colab and Drive, and an Anthropic API key for the LLM notebook.
+
+### A. Quick check (no data, no GPU, no API key)
+
+The prediction files from every model are already in `results/`, so you can reproduce all comparison tables without training anything.
+
+```
+git clone https://github.com/ttobias28/PhishRadar-Project
+cd PhishRadar-Project
+python -m venv .venv
+.venv\Scripts\activate          # Windows. On macOS/Linux: source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+Then open `PhishRadar_comparison.ipynb` (in VS Code, click **Select Kernel** and choose the `.venv` environment, or run `jupyter notebook`) and choose **Run All**. The notebook must be opened from the repository folder, because it reads `results/predictions/` next to itself.
+
+It regenerates `results/comparison_table.csv`, `comparison_table_full.csv`, `mcnemar_tests.csv`, the charts, and the Experiment B table. The email text is not in this repository, so without the split files the notebook skips its check against the split files and its text-based error analysis, and says so when it does. Build the splits (step 1 below) to run those too.
+
+### B. Full run in Google Colab
+
+**Open a notebook in Colab** (no installation needed). Click its link below, or go to Colab, choose **File, Open notebook, GitHub**, and paste `ttobias28/PhishRadar-Project`.
+
+| Notebook | Open |
+|---|---|
+| TF-IDF baseline | [Open in Colab](https://colab.research.google.com/github/ttobias28/PhishRadar-Project/blob/main/PhishRadar_tfidf_baseline.ipynb) |
+| DistilBERT | [Open in Colab](https://colab.research.google.com/github/ttobias28/PhishRadar-Project/blob/main/PhishRadar_DistilBERT.ipynb) |
+| Experiment A (source-invariant DistilBERT) | [Open in Colab](https://colab.research.google.com/github/ttobias28/PhishRadar-Project/blob/main/PhishRadar_DistilBERT_SourceInvariant.ipynb) |
+| LLM approach and Experiment B | [Open in Colab](https://colab.research.google.com/github/ttobias28/PhishRadar-Project/blob/main/PhishRadar_LLM.ipynb) |
+| Comparison | [Open in Colab](https://colab.research.google.com/github/ttobias28/PhishRadar-Project/blob/main/PhishRadar_comparison.ipynb) |
+
+**1. Build the data once** (the emails are not stored in this repo). On any computer with Python, download the two Kaggle datasets into `data/raw/` as described in [`data/README.md`](data/README.md), then run:
 
 ```
 python src/clean_data.py data/raw/phishing_email_dataset data/raw/phishing_email_detection data/cleaned
 python src/make_splits.py data/cleaned data/splits
 ```
 
-For Colab, put the resulting CSVs in `MyDrive/phishradar/data/splits/` (the notebooks read and write under `MyDrive/phishradar/`).
+Upload the CSV files in `data/splits/` to your Google Drive at `MyDrive/phishradar/data/splits/`. All five notebooks read and write under `MyDrive/phishradar/`:
 
-**2. Run the notebooks in this order** (each one: open in Colab, then Runtime → Run all):
-
-| Step | Notebook | Needs | Produces |
-|---|---|---|---|
-| 1 | `PhishRadar_tfidf_baseline.ipynb` | CPU | `results/predictions/tfidf_*.csv`, TF-IDF tables |
-| 2 | `PhishRadar_DistilBERT.ipynb` | T4 GPU, splits in Drive | `results/predictions/distilbert_*.csv` |
-| 3 | `PhishRadar_DistilBERT_SourceInvariant.ipynb` (Experiment A) | T4 GPU (about 2 hours), splits in Drive | `results/predictions/distilbert_{baseline,balanced,source_invariant}_*.csv`, `results/si_*` |
-| 4 | `PhishRadar_LLM.ipynb` | Anthropic API key | `results/predictions/llm_*.csv`, Experiment B rewrites (`b_data/`) |
-| 5 | Experiment B sections at the end of the TF-IDF and DistilBERT notebooks | output of step 4 | `results/b_predictions/` |
-| 6 | `PhishRadar_comparison.ipynb` | CPU, all prediction files above (steps 1–5) | comparison tables, McNemar tests, charts, error analysis |
-
-The LLM notebook reads `ANTHROPIC_API_KEY` from Colab Secrets or a local `.env` file (see `.env.example`; never commit your key). The full run makes roughly 15,000 paid API calls, cached in your Drive so re-runs are free. **To check the results without re-running anything**, the prediction files are already in `results/`, so you can run only step 6.
-
-**Colab folder layout.** All five notebooks read and write under `MyDrive/phishradar/`:
-* `data/splits/`: the split CSVs from step 1
+* `data/splits/`: the split CSVs from this step
 * `results/predictions/` and `results/b_predictions/`: prediction files written by the model notebooks and read by the comparison notebook
 * `b_data/`: Experiment B rewrites (from the LLM notebook)
 * `models/`: saved DistilBERT models (not committed; about 250 MB each)
 
-Allow the Google Drive connection when a notebook asks.
+**2. Run the notebooks in this order.** In each one choose **Runtime, Run all**, and click **Connect** when it asks to use Google Drive. Only the two DistilBERT notebooks need a GPU: choose **Runtime, Change runtime type, T4 GPU** before running.
 
-**Reproducing without retraining.** Copy this repo's `results/predictions/` and `results/b_predictions/` folders into `MyDrive/phishradar/results/`, put the splits in `MyDrive/phishradar/data/splits/`, then run `PhishRadar_comparison.ipynb`.
+| Step | Notebook | Needs | Produces |
+|---|---|---|---|
+| 1 | `PhishRadar_tfidf_baseline.ipynb` | CPU | `results/predictions/tfidf_*.csv`, TF-IDF tables |
+| 2 | `PhishRadar_DistilBERT.ipynb` | T4 GPU | `results/predictions/distilbert_*.csv` |
+| 3 | `PhishRadar_DistilBERT_SourceInvariant.ipynb` (Experiment A) | T4 GPU (about 2 hours) | `results/predictions/distilbert_{baseline,balanced,source_invariant}_*.csv`, `results/si_*` |
+| 4 | `PhishRadar_LLM.ipynb` | Anthropic API key | `results/predictions/llm_*.csv`, Experiment B rewrites (`b_data/`) |
+| 5 | Experiment B sections at the end of the TF-IDF and DistilBERT notebooks | output of step 4 | `results/b_predictions/` |
+| 6 | `PhishRadar_comparison.ipynb` | CPU, all prediction files from steps 1-5 | comparison tables, McNemar tests, charts, error analysis |
 
-**Sanity check.** A correct run gives about: TF-IDF in-source F1 0.99 and CEAS recall 0.85; DistilBERT Nazario recall 0.81; LLM Nazario recall 0.98. GPU training can differ from our numbers by about a point.
+**LLM notebook.** Add your key in Colab: click the **key icon** (Secrets) in the left bar, add a secret named `ANTHROPIC_API_KEY`, and turn on **Notebook access**. The paid steps are switched **off** by default, so set `RUN_TEST`, `RUN_B_REWRITES` and `RUN_B_CLASSIFY` to `True` only when you mean to run them. Every answer is cached in your Drive, so re-runs are free.
 
-**Time and cost (approximate).** TF-IDF: minutes on CPU. DistilBERT: about 10 minutes for a quick test (SAMPLE_SIZE = 5000), and about 20 minutes for the full run on all ~30,000 training emails on a T4. Experiment A: about 2 hours on a T4. LLM: about 15,000 paid API calls (about $5.00), cached afterwards. Comparison: a few minutes.
+**Re-checking the results without retraining in Colab.** Copy this repo's `results/predictions/` and `results/b_predictions/` folders into `MyDrive/phishradar/results/`, put the splits in `MyDrive/phishradar/data/splits/`, and run only `PhishRadar_comparison.ipynb`.
 
-Tested with Python 3.13, torch 2.14, transformers 5.22. `requirements.txt` is not version-pinned.
+### C. Running locally (VS Code or Jupyter)
+
+1. Follow the install commands in [part A](#a-quick-check-no-data-no-gpu-no-api-key), and open each notebook **from the repository root** (the notebooks use the folder they are in as their base, so the repo's `data/` and `results/` folders are used automatically).
+2. Build the splits as in step 1 above. They end up in `data/splits/`, which is where the notebooks look. You do not need Google Drive.
+3. Run the notebooks in the order in the table above, selecting the `.venv` kernel in VS Code.
+
+**What differs from Colab**
+
+* **TF-IDF, LLM and comparison notebooks** run unchanged. They detect that they are not in Colab and read and write under the repo folder (`results/predictions/` and so on).
+* **DistilBERT notebooks need a GPU.** On a CPU they run, but training is impractically slow. We trained them in Colab on a T4, and `results/predictions/` already holds the output. The last two sections of `PhishRadar_DistilBERT.ipynb` (18, saving to Drive, and 19, Experiment B) are Colab-only, so skip them locally. Experiment A's notebook runs locally but writes its files next to the notebook (`si_*.csv` and `si_predictions/`) instead of `results/`; copy them into `results/` and `results/predictions/` if you want the comparison notebook to include them.
+* **LLM notebook:** copy `.env.example` to `.env` and put your key in it (`ANTHROPIC_API_KEY=...`). Never commit `.env`. Set the three `RUN_...` switches described above to `True` to make paid calls. Answers are cached in `results/llm_cache/`.
+
+### Checking that it worked
+
+A correct run gives about: TF-IDF in-source F1 0.99 and CEAS recall 0.85; DistilBERT Nazario recall 0.81; LLM Nazario recall 0.98. GPU training can differ from our numbers by about a point.
+
+**If something fails**
+
+| Message | Fix |
+|---|---|
+| `train.csv not found` | The split CSVs are not where the notebook looks: `MyDrive/phishradar/data/splits/` in Colab, `data/splits/` locally. Rebuild them with step 1. |
+| `Google Drive didn't connect` | Allow the Drive pop-up and rerun the cell. |
+| `No GPU` | In Colab choose Runtime, Change runtime type, T4 GPU, then rerun. |
+| `ModuleNotFoundError` | Run `pip install -r requirements.txt` in the environment the notebook uses. |
+| `ANTHROPIC_API_KEY` not found | Add it as a Colab secret or in `.env` (see above). |
+| `Prediction files found: 0` | The comparison notebook is not being run from the repo folder, or the prediction files were not copied into `results/predictions/`. |
+
+**Time and cost (approximate).** TF-IDF: minutes on CPU. DistilBERT: about 10 minutes for a quick test (`SAMPLE_SIZE = 5000`), and about 20 minutes for the full run on all ~30,000 training emails on a T4. Experiment A: about 2 hours on a T4. LLM: about 15,000 paid API calls (about $5.00), cached afterwards. Comparison: a few minutes.
 
 ---
 
