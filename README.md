@@ -4,6 +4,8 @@
 
 PhishRadar compares three AI approaches for detecting phishing and scam emails: a classical ML model, a fine-tuned transformer, and a prompted LLM. The focus is on **rigorous evaluation**, especially **cross-source generalization**, rather than on a new model architecture.
 
+**To run the project, jump to [Setup and how to run](#setup-and-how-to-run).** The quickest check takes about 5 minutes and needs only Python.
+
 ## Team
 | Member | Github |
 |---|---|
